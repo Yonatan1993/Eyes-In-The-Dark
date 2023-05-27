@@ -10,13 +10,20 @@ from queue import Queue
 import matplotlib.pyplot as plt
 from find_path import build_path, a_star
 from video_loader import *
-from project_utils import say_instrutions
+from gtts import gTTS
+from playsound import playsound
+import threading
+import time
+from speeches import Speech
+from project_utils import speak
+
 
 
 class Algo:
     TEST_MODE = False
     NO_OBS_ALERT = False
     GREETING_ALERT = False
+    OBSTACLE_ALERT = False
 
 
     def __init__(self):
@@ -24,9 +31,29 @@ class Algo:
         self.model = torch.hub.load('C:/Users/User/PycharmProjects/eyes_in_the_dark/models/yolov5', 'custom', path,
                                     source='local')
         self.size = 416
+        self.save_text_to_speach()
         b = self.model.names[0] = 'person'
 
+    def save_text_to_speach(self):
+        texts = ["Hello , Welcome to, Eyes in the Dark.","No obstacle detected, please continue.",
+                 "There is an obstacle in the room", "Stop , take a left turn to start bypass the obstacle",
+                 "Stop , take a right turn to start bypass the obstacle"
+                 ]
+        # Iterate over each text
+        for i, text in enumerate(texts):
+            # Create a gTTS object
+            tts = gTTS(text=text, lang='en', slow=False)
+            # Save the speech audio into a file
+            filename = f"speek_files/{texts[i].split()[0]}_{i+1}.mp3"
+            tts.save(filename)
 
+    # def speak(self, speech_to_speak):
+    #     if speech_to_speak.value == 1:
+    #         playsound("speek_files/Hello_1.mp3")
+    #     elif speech_to_speak.value == 2:
+    #         playsound("speek_files/No_2.mp3")
+    #     elif speech_to_speak.value == 3:
+    #         playsound("speek_files/There_3.mp3")
 
 
 
@@ -130,6 +157,8 @@ class Algo:
 
         return start, end, maze, maze_solver_path
 
+
+
     def process_frame(self, currnet_frame):
 
         if type(currnet_frame) == str:
@@ -139,13 +168,15 @@ class Algo:
                 raise Exception("No person Exception")
             else:
                 if not self.GREETING_ALERT:
-                    self.say_to_person("Hello, Welcome to, Eyes in the Dark.")
+                    # self.say_to_person("Hello, Welcome to, Eyes in the Dark.")
+                    threading.Thread(target=speak, args=(Speech.WELCOME,)).start()
                     self.GREETING_ALERT = True
                 obstacles_list = self.detect_obstacles_in_img(obstacle_img)
                 if len(obstacles_list) == 0:
                     if not self.NO_OBS_ALERT:
                         self.NO_OBS_ALERT = True
-                        self.say_to_person("No obstacle detected, please continue.")
+                  #      self.say_to_person("No obstacle detected, please continue.")
+                    threading.Thread(target=speak, args=(Speech.NO_OBSTACLES,)).start()
                     raise Exception("No obstacle Exception")
 
         # camera input 0
@@ -155,7 +186,8 @@ class Algo:
                 raise Exception("No person Detected in camera")
             else:
                 if not self.GREETING_ALERT:
-                    self.say_to_person("Hello, Welcome to, Eyes in the Dark.")
+                    #self.say_to_person("Hello, Welcome to, Eyes in the Dark.")
+                    threading.Thread(target=speak, args=(Speech.WELCOME,)).start()
                     self.GREETING_ALERT = True
                 obstacle_img = currnet_frame
                 obstacles_list = self.detect_obstacles_in_img(obstacle_img)
@@ -163,6 +195,7 @@ class Algo:
                     if not self.NO_OBS_ALERT:
                         self.NO_OBS_ALERT = True
                         self.say_to_person("No obstacle detected, please continue.")
+                        threading.Thread(target=speak, args=(Speech.NO_OBSTACLES,)).start()
                     raise Exception("No obstacle Exception")
 
         height, width = obstacle_img.shape[:2]
@@ -189,7 +222,8 @@ class Algo:
             # TODO: Solve vis_ui scaling bug
             self.vis_debug(obstacle_img, vis_ui, maze_solver_path, person_point, end, scale)
 
-        #self.say_to_person("There is an obstacle in the room")
+
+
 
         return person_point, end, maze_solver_path, obstacles_list
 

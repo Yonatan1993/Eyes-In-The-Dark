@@ -20,8 +20,9 @@ ENV/
 # IDE specific files
 .idea/
 .vscode/
-.models/
-.our_cannybased_objdect/
+/distanceModule
+/models
+/our_cannybased_objdect
 /PaulOpenCvCourse
 # Compiled Python files
 *.pyc

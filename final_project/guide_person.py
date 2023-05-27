@@ -2,8 +2,14 @@ import pygame
 import pyttsx3
 import time
 import math
-from project_utils import say_instrutions
 from multiprocessing import Process
+from speeches import Speech
+from gtts import gTTS
+from playsound import playsound
+import threading
+from project_utils import speak
+
+
 
 # Define the colors
 white = (255, 255, 255)
@@ -29,6 +35,20 @@ PASSED_ORANGE_CORNER = False
 PERSON_STARTED_BYPASS_ROUTE = False
 PERSON_AT_THE_MIDDLE = False
 
+
+
+
+# def speak( speech_to_speak):
+#     if speech_to_speak.value == 1:
+#         playsound("speek_files/Hello_1.mp3")
+#     elif speech_to_speak.value == 2:
+#         playsound("speek_files/No_2.mp3")
+#     elif speech_to_speak.value == 3:
+#         playsound("speek_files/There_3.mp3")
+#     elif speech_to_speak.value == 4:
+#         playsound("speek_files/Stop_4.mp3")
+#     elif speech_to_speak.value == 5:
+#         playsound("speek_files/Stop_5.mp3")
 
 def guid_person(msg):
     Process(target=say_instrutions,
@@ -230,30 +250,29 @@ def track_and_guide(current_pos, end_position, path, ap, vl, screen_height, scre
 
 def starting_bypass_route(dot_pos, engine, last_spoken_color, obstacle_height, obstacle_pos):
     global PERSON_STARTED_BYPASS_ROUTE
-    print("---Inside starting_bypass_route() function ")
-    # Define the upper left and lower left corners of the obstacle
-    upper_left_corner, _ = obstacle_pos[0]
-    yu_left, xu_left = upper_left_corner
-    bottom_left_corner = (yu_left, xu_left + obstacle_height)
-    yb_right, xb_right = bottom_left_corner
-
-    # Calculate the distances between the person and the upper left and lower left corners
-    upper_left_distance = math.sqrt((dot_pos[0] - yu_left) ** 2 + (dot_pos[1] - xu_left) ** 2)
-    lower_left_distance = math.sqrt((dot_pos[0] - yb_right) ** 2 + (dot_pos[1] - xb_right) ** 2)
-
-    # Check which corner the person is closer to
-    if upper_left_distance < lower_left_distance:
-        # The person is closer to the upper left corner, so they should turn right
-        message = "Stop, take a left turn to start bypass the obstacle"
-        print("________Tell The person take left turn______")
-    else:
-        # The person is closer to the lower left corner, so they should turn left
-        message = "Stop, take a right turn to start bypass the obstacle"
-        print("______Tell The person take right turn_____")
     if not PERSON_STARTED_BYPASS_ROUTE:
         PERSON_STARTED_BYPASS_ROUTE = True
-        guid_person(message)
-        #engine.runAndWait()
+        print("---Inside starting_bypass_route() function ")
+        # Define the upper left and lower left corners of the obstacle
+        upper_left_corner, _ = obstacle_pos[0]
+        yu_left, xu_left = upper_left_corner
+        bottom_left_corner = (yu_left, xu_left + obstacle_height)
+        yb_right, xb_right = bottom_left_corner
+
+        # Calculate the distances between the person and the upper left and lower left corners
+        upper_left_distance = math.sqrt((dot_pos[0] - yu_left) ** 2 + (dot_pos[1] - xu_left) ** 2)
+        lower_left_distance = math.sqrt((dot_pos[0] - yb_right) ** 2 + (dot_pos[1] - xb_right) ** 2)
+
+        # Check which corner the person is closer to
+        if upper_left_distance < lower_left_distance:
+            # The person is closer to the upper left corner, so they should turn right
+            threading.Thread(target=speak, args=(Speech.START_BYPASS_LEFT,)).start()
+            print("________Tell The person take left turn______")
+        else:
+            # The person is closer to the lower left corner, so they should turn left
+            threading.Thread(target=speak, args=(Speech.START_BYPASS_LEFT,)).start()
+            print("______Tell The person take right turn_____")
+
         last_spoken_color = 'upper_left_start'
 
     return last_spoken_color
@@ -332,7 +351,7 @@ def is_person_at_middle_line(dot_pos, obstacle_pos, obstacle_height, last_spoken
     # if center_line_y - tolerance <= dot_pos[1] <= center_line_y + tolerance:
     if last_spoken_color == 'bottom_right_corner':
         if center_line_y > dot_pos[1]:
-            message = 'Stop, turn write'
+            message = 'Stop, turn right'
             print("----In Function is_person_at_middle_line() , person taking left turn---- ")
             PERSON_AT_THE_MIDDLE = True
     elif last_spoken_color == 'upper_right_corner':

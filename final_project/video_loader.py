@@ -71,10 +71,10 @@ class VideoLoader:
 
 
 if __name__ == "__main__":
-   # video_loader = VideoLoader('C:/Users/User/PycharmProjects/eyes_in_the_dark/models/yolov5/data/video'
-    #                           '/live_bypass_right.mp4')
+    video_loader = VideoLoader('C:/Users/User/PycharmProjects/eyes_in_the_dark/models/yolov5/data/video'
+                               '/live_bypass_right.mp4')
 
-    video_loader = VideoLoader(0)
+    #video_loader = VideoLoader(0)
     algo = Algo()
     frame = video_loader.get_frame_from_camera()
     video_loader.starting_model(algo, video_loader)
