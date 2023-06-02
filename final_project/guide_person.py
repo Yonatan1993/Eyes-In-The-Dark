@@ -40,34 +40,28 @@ PERSON_AT_THE_MIDDLE = False
 
 # def speak( speech_to_speak):
 #     if speech_to_speak.value == 1:
-#         playsound("speek_files/Hello_1.mp3")
+#         playsound("speak_files/Hello_1.mp3")
 #     elif speech_to_speak.value == 2:
-#         playsound("speek_files/No_2.mp3")
+#         playsound("speak_files/No_2.mp3")
 #     elif speech_to_speak.value == 3:
-#         playsound("speek_files/There_3.mp3")
+#         playsound("speak_files/There_3.mp3")
 #     elif speech_to_speak.value == 4:
-#         playsound("speek_files/Stop_4.mp3")
+#         playsound("speak_files/Stop_4.mp3")
 #     elif speech_to_speak.value == 5:
-#         playsound("speek_files/Stop_5.mp3")
+#         playsound("speak_files/Stop_5.mp3")
 
-def guid_person(msg):
-    Process(target=say_instrutions,
-            args=(msg,)).start()
 
 def init_engines(screen_height, screen_width):
     # Initialize Pygame
     pygame.init()
-    # Initialize Pyttsx3
-    engine = pyttsx3.init()  # text to speach
-    engine.setProperty('rate', 150)  # Set the speaking rate to 150 words per minute
     # Create the screen
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("2D Simulation")
 
-    return engine, screen
+    return  screen
 
 
-def check_collision(dot_pos, dot_radius, last_color_touched, engine, screen):
+def check_collision(dot_pos, dot_radius, last_color_touched,screen):
     # Check if the dot has touched a colored pixel
     screen_width = screen.get_width()
     for i in range(-dot_radius - 1, dot_radius + 1):
@@ -77,41 +71,31 @@ def check_collision(dot_pos, dot_radius, last_color_touched, engine, screen):
             color = screen.get_at((x, y))
             # print(f"Pixel color at ({x}, {y}): {color}")
             if color == yellow and last_color_touched != 'yellow':
-                message = 'collision warning, Go back'
-                guid_person(message)
-                #engine.runAndWait()
+                threading.Thread(target=speak,args=(Speech.COLLISION_WARNING,)).start()
                 last_color_touched = 'yellow'
                 return last_color_touched
 
 
             elif color == blue and last_color_touched != 'blue':
                 if dot_pos[0] < screen_width / 2:  # If the dot is on the left half of the screen
-                    message = 'collision warning, turn left'
+                    threading.Thread(target=speak, args=(Speech.COLLISION_WARNING_LEFT,)).start()
                 else:  # If the dot is on the right half of the screen
-                    message = 'collision warning, turn right'
-                guid_person(message)
-                #engine.runAndWait()
+                    threading.Thread(target=speak, args=(Speech.COLLISION_WARNING_RIGHT,)).start()
                 last_color_touched = 'blue'
                 return last_color_touched
 
             elif color == gray and last_color_touched != 'gray':
-                message = 'Warning , obstacle in front of you, turn left'
-                guid_person(message)
-                #engine.runAndWait()
+                threading.Thread(target=speak, args=(Speech.WARNING_IN_FRONT_LEFT,)).start()
                 last_color_touched = 'gray'
                 return last_color_touched
 
             elif color == brown and last_color_touched != 'brown':
-                message = 'Warning , obstacle in front of you, turn right'
-                guid_person(message)
-                #engine.runAndWait()
+                threading.Thread(target=speak, args=(Speech.WARNING_IN_FRONT_RIGHT,)).start()
                 last_color_touched = 'brown'
                 return last_color_touched
 
             elif color == orange and last_color_touched != 'orange':
-                message = 'Warning , obstacle in front , go back'
-                guid_person(message)
-                #engine.runAndWait()
+                threading.Thread(target=speak, args=(Speech.WARNING_IN_FRONT_BACK,)).start()
                 last_color_touched = 'orange'
                 return last_color_touched
 
@@ -119,8 +103,9 @@ def check_collision(dot_pos, dot_radius, last_color_touched, engine, screen):
 
 
 def track_and_guide(current_pos, end_position, path, ap, vl, screen_height, screen_width, obstacle_pos=None):
+    print("******Simulation Started**********")
     # Define the main loop
-    engine, screen = init_engines(screen_height, screen_width)
+    screen = init_engines(screen_height, screen_width)
     # Define the font for the text-to-speech output
     font = pygame.font.Font(None, 30)
     RUNNING = True
@@ -170,16 +155,16 @@ def track_and_guide(current_pos, end_position, path, ap, vl, screen_height, scre
         dot_positions = dot_positions[-trail_size:]
 
         # Check for collisions with the obstacle or a yellow pixel
-        last_spoken_color = check_collision(dot_pos, dot_radius, last_spoken_color, engine, screen)
+        last_spoken_color = check_collision(dot_pos, dot_radius, last_spoken_color, screen)
         if not PERSON_STARTED_BYPASS_ROUTE:
-            starting_bypass_route(dot_pos, engine, last_spoken_color, obstacle_height, obstacle_pos)
+            starting_bypass_route(dot_pos, last_spoken_color, obstacle_height, obstacle_pos)
         if not PASSED_YELLOW_CORNER and PERSON_STARTED_BYPASS_ROUTE:
-            check_if_person_passed_blue_corner(dot_pos, obstacle_pos, obstacle_height, engine, last_spoken_color)
+            check_if_person_passed_blue_corner(dot_pos, obstacle_pos, obstacle_height, last_spoken_color)
         if not PASSED_ORANGE_CORNER and PERSON_STARTED_BYPASS_ROUTE:
-            last_spoken_color = check_if_person_passed_orange_corner(dot_pos, obstacle_pos, obstacle_height, engine,
+            last_spoken_color = check_if_person_passed_orange_corner(dot_pos, obstacle_pos, obstacle_height,
                                                                      last_spoken_color)
         if not PERSON_AT_THE_MIDDLE and PASSED_ORANGE_CORNER:
-            is_person_at_middle_line(dot_pos, obstacle_pos, obstacle_height, last_spoken_color,engine ,tolerance=10)
+            is_person_at_middle_line(dot_pos, obstacle_pos, obstacle_height, last_spoken_color,tolerance=10)
 
         # Draw the screen
         screen.fill(white)
@@ -248,7 +233,7 @@ def track_and_guide(current_pos, end_position, path, ap, vl, screen_height, scre
     pygame.quit()
 
 
-def starting_bypass_route(dot_pos, engine, last_spoken_color, obstacle_height, obstacle_pos):
+def starting_bypass_route(dot_pos,last_spoken_color, obstacle_height, obstacle_pos):
     global PERSON_STARTED_BYPASS_ROUTE
     if not PERSON_STARTED_BYPASS_ROUTE:
         PERSON_STARTED_BYPASS_ROUTE = True
@@ -270,7 +255,7 @@ def starting_bypass_route(dot_pos, engine, last_spoken_color, obstacle_height, o
             print("________Tell The person take left turn______")
         else:
             # The person is closer to the lower left corner, so they should turn left
-            threading.Thread(target=speak, args=(Speech.START_BYPASS_LEFT,)).start()
+            threading.Thread(target=speak, args=(Speech.START_BYPASS_RIGHT,)).start()
             print("______Tell The person take right turn_____")
 
         last_spoken_color = 'upper_left_start'
@@ -278,7 +263,7 @@ def starting_bypass_route(dot_pos, engine, last_spoken_color, obstacle_height, o
     return last_spoken_color
 
 
-def check_if_person_passed_blue_corner(dot_pos, obstacle_pos, obstacle_height, engine, last_spoken_color):
+def check_if_person_passed_blue_corner(dot_pos, obstacle_pos, obstacle_height,last_spoken_color):
     # Define the upper left and lower left corners of the obstacle
     global PASSED_YELLOW_CORNER
     upper_left_corner, _ = obstacle_pos[0]
@@ -289,28 +274,23 @@ def check_if_person_passed_blue_corner(dot_pos, obstacle_pos, obstacle_height, e
     # Check if the dot has passed the upper left corner
     if dot_pos[1] < xu_left and dot_pos[0] < yu_left:
         PASSED_YELLOW_CORNER = True
-        message = "Stop, take a right turn please"
         print("------In Function check_if_person_passed_blue_corner() function, person taking right turn ------")
         if last_spoken_color != 'upper_yellow':
-            guid_person(message)
-            #engine.runAndWait()
+            threading.Thread(target=speak,args=(Speech.BYPASS_RIGHT,)).start()
             last_spoken_color = 'upper_yellow'
 
     # Check if the dot has passed the lower left corner
     elif dot_pos[1] > xb_right and dot_pos[0] < yb_right:
         PASSED_YELLOW_CORNER = True
-        message = "Stop, take a left turn please"
         print("------In Function check_if_person_passed_blue_corner() function, person taking left turn---- ")
-
         if last_spoken_color != 'lower_yellow':
-            guid_person(message)
-            #engine.runAndWait()
+            threading.Thread(target=speak, args=(Speech.BYPASS_LEFT,)).start()
             last_spoken_color = 'lower_yellow'
 
     return last_spoken_color
 
 
-def check_if_person_passed_orange_corner(dot_pos, obstacle_pos, obstacle_height, engine, last_spoken_color):
+def check_if_person_passed_orange_corner(dot_pos, obstacle_pos, obstacle_height, last_spoken_color):
     global PASSED_ORANGE_CORNER
     coating_width = 5
     # Define the upper right and lower right corners of the obstacle
@@ -323,43 +303,38 @@ def check_if_person_passed_orange_corner(dot_pos, obstacle_pos, obstacle_height,
     if dot_pos[1] < xu_right and dot_pos[0] > yu_right:
         PASSED_ORANGE_CORNER = True
         if last_spoken_color != 'upper_right_corner':
-            message = 'Stop, turn right please'
             print("----In Function check_if_person_passed_orange_corner() , person taking right turn---- ")
-            guid_person(message)
-            #engine.runAndWait()
+            threading.Thread(target=speak, args=(Speech.BYPASS_RIGHT,)).start()
             last_spoken_color = 'upper_right_corner'
 
     # Check if the dot has passed the bottom right corner
     elif dot_pos[1] > xb_right and dot_pos[0] > yb_right:
         PASSED_ORANGE_CORNER = True
         if last_spoken_color != 'bottom_right_corner':
-            message = 'Stop, turn left please'
             print("----In Function check_if_person_passed_orange_corner() , person taking left turn---- ")
-            guid_person(message)
-            #engine.runAndWait()
+            threading.Thread(target=speak, args=(Speech.BYPASS_LEFT,)).start()
             last_spoken_color = 'bottom_right_corner'
 
     return last_spoken_color
 
 
-def is_person_at_middle_line(dot_pos, obstacle_pos, obstacle_height, last_spoken_color, engine, tolerance=10):
+def is_person_at_middle_line(dot_pos, obstacle_pos, obstacle_height, last_spoken_color,tolerance=10):
     global PERSON_AT_THE_MIDDLE
     _, bottom_right_corner = obstacle_pos[0]
-    ymin, xmin = bottom_right_corner
+    xmin, ymin = bottom_right_corner
 
-    center_line_y = xmin - (obstacle_height / 2)
+    center_line_y = ymin - (obstacle_height / 2)
     # if center_line_y - tolerance <= dot_pos[1] <= center_line_y + tolerance:
     if last_spoken_color == 'bottom_right_corner':
-        if center_line_y > dot_pos[1]:
-            message = 'Stop, turn right'
+        if center_line_y > dot_pos[1] and not PERSON_AT_THE_MIDDLE:
             print("----In Function is_person_at_middle_line() , person taking left turn---- ")
             PERSON_AT_THE_MIDDLE = True
+            threading.Thread(target=speak, args=(Speech.BYPASS_RIGHT,)).start()
+
     elif last_spoken_color == 'upper_right_corner':
-        if center_line_y > dot_pos[1]:
-            message = 'Stop, turn left'
+        if center_line_y < dot_pos[1] and not PERSON_AT_THE_MIDDLE:
             print("----In Function is_person_at_middle_line() , person taking left right---- ")
             PERSON_AT_THE_MIDDLE = True
-    if PERSON_AT_THE_MIDDLE:
-        guid_person(message)
-        #engine.runAndWait()
+            threading.Thread(target=speak, args=(Speech.BYPASS_LEFT,)).start()
+
     return PERSON_AT_THE_MIDDLE

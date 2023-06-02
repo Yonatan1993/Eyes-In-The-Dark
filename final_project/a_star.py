@@ -37,23 +37,21 @@ class Algo:
     def save_text_to_speach(self):
         texts = ["Hello , Welcome to, Eyes in the Dark.","No obstacle detected, please continue.",
                  "There is an obstacle in the room", "Stop , take a left turn to start bypass the obstacle",
-                 "Stop , take a right turn to start bypass the obstacle"
+                 "Stop , take a right turn to start bypass the obstacle","collision warning, Go back",
+                 "collision warning, turn right", "collision warning, turn left", "Warning , obstacle in front of you, turn left",
+                 "Warning , obstacle in front of you, turn right","Warning , obstacle in front , go back",
+                 "Stop , take a right turn please","Stop , take a left turn please"
+
                  ]
         # Iterate over each text
         for i, text in enumerate(texts):
             # Create a gTTS object
             tts = gTTS(text=text, lang='en', slow=False)
             # Save the speech audio into a file
-            filename = f"speek_files/{texts[i].split()[0]}_{i+1}.mp3"
+            filename = f"speak_files/{texts[i].split()[0]}_{i+1}.mp3"
             tts.save(filename)
 
-    # def speak(self, speech_to_speak):
-    #     if speech_to_speak.value == 1:
-    #         playsound("speek_files/Hello_1.mp3")
-    #     elif speech_to_speak.value == 2:
-    #         playsound("speek_files/No_2.mp3")
-    #     elif speech_to_speak.value == 3:
-    #         playsound("speek_files/There_3.mp3")
+
 
 
 
@@ -109,7 +107,7 @@ class Algo:
             x2 = int(row['xmax'])
             y2 = int(row['ymax'])
             d = (row['class'])
-            if d == 36:
+            if (d == 0) or (d == 77) or (d == 16) or (d == 15) or (d == 36) or (d == 14) or (d == 28):
                 continue
             obstacle_box = obstacle_box + (int(x1), int(y1), abs(int(x1 - x2)), abs(int(y1 - y2)))
 
@@ -194,7 +192,6 @@ class Algo:
                 if len(obstacles_list) == 0:
                     if not self.NO_OBS_ALERT:
                         self.NO_OBS_ALERT = True
-                        self.say_to_person("No obstacle detected, please continue.")
                         threading.Thread(target=speak, args=(Speech.NO_OBSTACLES,)).start()
                     raise Exception("No obstacle Exception")
 
